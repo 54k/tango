@@ -8,15 +8,15 @@ public final class TransactionSummary {
     private final double max;
     private final double min;
     private final double avg;
-    private final double volume;
+    private final double sum;
     private final long count;
 
-    public TransactionSummary(long timestamp, double max, double min, double avg, double volume, long count) {
+    public TransactionSummary(long timestamp, double max, double min, double avg, double sum, long count) {
         this.timestamp = timestamp;
         this.max = max;
         this.min = min;
         this.avg = avg;
-        this.volume = volume;
+        this.sum = sum;
         this.count = count;
     }
 
@@ -37,9 +37,8 @@ public final class TransactionSummary {
         return avg;
     }
 
-    @JsonIgnore
-    public double getVolume() {
-        return volume;
+    public double getSum() {
+        return sum;
     }
 
     public long getCount() {

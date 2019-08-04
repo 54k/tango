@@ -34,7 +34,7 @@ class TransactionServiceSpec extends Specification {
             summary.count == 5
             summary.max == 5
             summary.min == 1
-            summary.volume == 15
+            summary.sum == 15
             summary.avg == 3
     }
 

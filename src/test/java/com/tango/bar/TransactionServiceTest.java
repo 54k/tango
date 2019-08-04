@@ -49,7 +49,7 @@ public class TransactionServiceTest {
         assertThat(summary.getCount(), equalTo(5L));
         assertThat(summary.getMax(), equalTo(5.0));
         assertThat(summary.getMin(), equalTo(1.0));
-        assertThat(summary.getVolume(), equalTo(15.0));
+        assertThat(summary.getSum(), equalTo(15.0));
         assertThat(summary.getAvg(), equalTo(3.0));
     }
 

@@ -80,11 +80,11 @@ public class TransactionService {
             min = max;
         }
 
-        double volume = transactionSummary1.getVolume() + transactionSummary2.getVolume();
+        double sum = transactionSummary1.getSum() + transactionSummary2.getSum();
         long count = transactionSummary1.getCount() + transactionSummary2.getCount();
-        double avg = volume == 0.0 ? 0.0 : volume / count;
+        double avg = sum == 0.0 ? 0.0 : sum / count;
 
-        return new TransactionSummary(0, max, min, avg, volume, count);
+        return new TransactionSummary(0, max, min, avg, sum, count);
     }
 
     public void addTransaction(Transaction transaction) {
@@ -124,11 +124,11 @@ public class TransactionService {
             min = max;
         }
 
-        double volume = prevTransactionSummary.getVolume() + transaction.getAmount();
+        double sum = prevTransactionSummary.getSum() + transaction.getAmount();
         long count = prevTransactionSummary.getCount() + (transaction.getAmount() == 0.0 ? 0 : 1);
 
-        double avg = volume == 0.0 ? 0.0 : volume / count;
+        double avg = sum == 0.0 ? 0.0 : sum / count;
 
-        return new TransactionSummary(prevTransactionSummary.getTimestamp(), max, min, avg, volume, count);
+        return new TransactionSummary(prevTransactionSummary.getTimestamp(), max, min, avg, sum, count);
     }
 }

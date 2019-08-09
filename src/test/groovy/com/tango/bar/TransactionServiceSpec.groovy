@@ -33,7 +33,7 @@ class TransactionServiceSpec extends Specification {
     }
 
     void testRestController() {
-        given: 'transactions with timestamp within last 15 seconds'
+        given:
             TimeMachine.setDate(LocalDateTime.now())
             def random = new Random()
             List<Transaction> transactions = (1..5).collect {

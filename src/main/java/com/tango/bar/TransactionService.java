@@ -20,7 +20,7 @@ public class TransactionService {
     }
 
     private static long currentSecondMillis() {
-        return withZeroNanos(System.currentTimeMillis());
+        return withZeroNanos(TimeMachine.nowMillis());
     }
 
     private static long withZeroNanos(long millis) {
@@ -87,16 +87,16 @@ public class TransactionService {
         return new TransactionSummary(0, max, min, avg, sum, count);
     }
 
-    public void addTransaction(Transaction transaction) {
+    public boolean addTransaction(Transaction transaction) {
         if (withZeroNanos(transaction.getTimestamp()) > currentSecondMillis()) {
-            return;
+            return false;
         }
 
-        doAddTransaction(transaction);
+        return doAddTransaction(transaction);
     }
 
     @SuppressWarnings("unchecked")
-    private void doAddTransaction(Transaction transaction) {
+    private boolean doAddTransaction(Transaction transaction) {
         long timestamp = withZeroNanos(transaction.getTimestamp());
         int windowIdx = (int) (millisToSeconds(timestamp) % SECONDS_PER_MINUTE);
         AtomicReference reference = window[windowIdx];
@@ -105,8 +105,12 @@ public class TransactionService {
             TransactionSummary prevTransactionSummary = (TransactionSummary) reference.get();
             TransactionSummary newTransactionSummary = computeSummary(prevTransactionSummary, transaction);
 
+            if (prevTransactionSummary == newTransactionSummary) {
+                return false;
+            }
+
             if (reference.compareAndSet(prevTransactionSummary, newTransactionSummary)) {
-                return;
+                return true;
             }
         }
     }

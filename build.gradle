@@ -1,11 +1,13 @@
 plugins {
     id 'org.springframework.boot' version '2.1.6.RELEASE'
     id 'java'
+    id 'jacoco'
 }
 
 apply plugin: 'io.spring.dependency-management'
 apply plugin: 'org.springframework.boot'
 apply plugin: 'groovy'
+apply plugin: 'jacoco'
 
 group = 'com.tango'
 version = '0.0.1-SNAPSHOT'

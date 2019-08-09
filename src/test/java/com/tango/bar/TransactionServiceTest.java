@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -23,10 +24,13 @@ public class TransactionServiceTest {
     @Before
     public void setUp() {
         service.clear();
+        TimeMachine.reset();
     }
 
     @Test
     public void testService() {
+        TimeMachine.setDate(LocalDateTime.now().withNano(0));
+
         // given: 'transactions with timestamp within last 15 seconds'
         List<Transaction> transactions = new ArrayList<>();
 
@@ -42,7 +46,7 @@ public class TransactionServiceTest {
         // add transaction with timestamp in the past
         service.addTransaction(new Transaction(getTimestamp(-61), 100));
         // add transaction with timestamp in the future
-        service.addTransaction(new Transaction(getTimestamp(2), 100));
+        service.addTransaction(new Transaction(getTimestamp(1), 100));
 
         // then: 'get expected summary'
         TransactionSummary summary = service.getStatistics();
@@ -54,6 +58,6 @@ public class TransactionServiceTest {
     }
 
     private static long getTimestamp(long secondsAdjust) {
-        return System.currentTimeMillis() + secondsAdjust * 1000;
+        return TimeMachine.nowMillis() + secondsAdjust * 1000;
     }
 }

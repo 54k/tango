@@ -18,8 +18,9 @@ public class TransactionController {
 
     @PostMapping("/transactions")
     public ResponseEntity<Void> transactions(@RequestBody Transaction transaction) {
-        transactionService.addTransaction(transaction);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        boolean isAdded = transactionService.addTransaction(transaction);
+        HttpStatus status = isAdded ? HttpStatus.CREATED : HttpStatus.NO_CONTENT;
+        return ResponseEntity.status(status).build();
     }
 
     @GetMapping("/statistics")

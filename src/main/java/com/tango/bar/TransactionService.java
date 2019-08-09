@@ -79,7 +79,7 @@ public class TransactionService {
             min = max;
         }
 
-        double sum = transactionSummary1.getSum() + transactionSummary2.getSum();
+        double sum = new BigDecimal(transactionSummary1.getSum()).add(new BigDecimal(transactionSummary2.getSum())).doubleValue();
         long count = transactionSummary1.getCount() + transactionSummary2.getCount();
 
         double avg = sum == 0 ? 0 : new BigDecimal(sum).divide(new BigDecimal(count), RoundingMode.FLOOR).doubleValue();
@@ -135,7 +135,7 @@ public class TransactionService {
             min = max;
         }
 
-        double sum = prevTransactionSummary.getSum() + transaction.getAmount();
+        double sum = new BigDecimal(prevTransactionSummary.getSum()).add(new BigDecimal(transaction.getAmount())).doubleValue();
         long count = prevTransactionSummary.getCount() + 1;
 
         return new TransactionSummary(prevTransactionSummary.getTimestamp(), max, min, 0, sum, count);

@@ -25,14 +25,16 @@ class TransactionServiceSpec extends Specification {
     @Autowired MockMvc mvc
 
     void setup() {
+        TimeMachine.setDate(LocalDateTime.now().withNano(0))
         service.clear()
+    }
+
+    void cleanup() {
         TimeMachine.reset()
     }
 
     void testRestController() {
         given: 'transactions with timestamp within last 15 seconds'
-            TimeMachine.setDate(LocalDateTime.now().withNano(0))
-
             def random = new Random()
             List<Transaction> transactions = (1..5).collect {
                 def timestamp = getTimestamp(-random.nextInt(60))
@@ -77,8 +79,6 @@ class TransactionServiceSpec extends Specification {
 
     void testService() {
         given:
-            TimeMachine.setDate(LocalDateTime.now().withNano(0))
-
             def random = new Random()
             List<Transaction> transactions = (1..5).collect {
                 def timestamp = getTimestamp(-random.nextInt(15))
@@ -108,12 +108,10 @@ class TransactionServiceSpec extends Specification {
     }
 
     void testWindowAdvance() {
-        def now = LocalDateTime.now()
-        TimeMachine.setDate(now.withNano(0))
         given:
             service.addTransaction(new Transaction(getTimestamp(-60), 100))
         when:
-            TimeMachine.setDate(now.plusSeconds(1))
+            TimeMachine.setDate(LocalDateTime.now().plusSeconds(1))
         then:
             service.getStatistics().count == 0
     }

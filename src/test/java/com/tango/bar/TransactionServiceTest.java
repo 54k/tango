@@ -1,5 +1,6 @@
 package com.tango.bar;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -23,7 +24,12 @@ public class TransactionServiceTest {
 
     @Before
     public void setUp() {
+        TimeMachine.setDate(LocalDateTime.now().withNano(0));
         service.clear();
+    }
+
+    @After
+    public void tearDown() {
         TimeMachine.reset();
     }
 

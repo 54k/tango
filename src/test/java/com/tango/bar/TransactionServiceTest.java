@@ -22,7 +22,7 @@ public class TransactionServiceTest {
 
     @Before
     public void setUp() {
-        service.init();
+        service.clear();
     }
 
     @Test
@@ -33,16 +33,16 @@ public class TransactionServiceTest {
         Random random = new Random();
         for (int i = 0; i < 5; i++) {
             long timestamp = getTimestamp(-random.nextInt(15));
-            Transaction transaction = new Transaction(1.0 + i, timestamp);
+            Transaction transaction = new Transaction(timestamp, 1.0 + i);
             transactions.add(transaction);
         }
 
         // when: 'add transactions'
         transactions.forEach(service::addTransaction);
         // add transaction with timestamp in the past
-        service.addTransaction(new Transaction(100, getTimestamp(-61)));
+        service.addTransaction(new Transaction(getTimestamp(-61), 100));
         // add transaction with timestamp in the future
-        service.addTransaction(new Transaction(100, getTimestamp(2)));
+        service.addTransaction(new Transaction(getTimestamp(2), 100));
 
         // then: 'get expected summary'
         TransactionSummary summary = service.getStatistics();

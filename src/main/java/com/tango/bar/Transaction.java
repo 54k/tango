@@ -2,19 +2,19 @@ package com.tango.bar;
 
 public final class Transaction {
 
-    private final double amount;
     private final long timestamp;
+    private final double amount;
 
-    public Transaction(double amount, long timestamp) {
+    public Transaction(long timestamp, double amount) {
         this.amount = amount;
         this.timestamp = timestamp;
     }
 
-    public double getAmount() {
-        return amount;
-    }
-
     public long getTimestamp() {
         return timestamp;
+    }
+
+    public double getAmount() {
+        return amount;
     }
 }

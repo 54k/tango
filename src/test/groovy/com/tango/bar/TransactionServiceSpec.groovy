@@ -10,7 +10,7 @@ class TransactionServiceSpec extends Specification {
     @Autowired TransactionService service
 
     void setup() {
-        service.init()
+        service.clear()
     }
 
     void testService() {
@@ -18,15 +18,15 @@ class TransactionServiceSpec extends Specification {
             def random = new Random()
             List<Transaction> transactions = (1..5).collect {
                 def timestamp = getTimestamp(-random.nextInt(15))
-                new Transaction(it, timestamp)
+                new Transaction(timestamp, it)
             }
 
         when: 'add transactions'
             transactions.each(service.&addTransaction)
             // add transaction with timestamp in the past
-            service.addTransaction(new Transaction(100, getTimestamp(-61)))
+            service.addTransaction(new Transaction(getTimestamp(-61), 100))
             // add transaction with timestamp in the future
-            service.addTransaction(new Transaction(100, getTimestamp(2)))
+            service.addTransaction(new Transaction(getTimestamp(2), 100))
 
         then: 'get expected summary'
             def summary = service.getStatistics()

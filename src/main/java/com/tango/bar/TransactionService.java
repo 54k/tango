@@ -16,51 +16,38 @@ public class TransactionService {
         for (int i = 0; i < SECONDS_PER_MINUTE; i++) {
             window[i] = new AtomicReference();
         }
-        init();
     }
 
-    private static long currentSecondMillis() {
-        return withZeroNanos(TimeMachine.nowMillis());
+    private static long currentMillis() {
+        return TimeMachine.nowMillis();
     }
 
-    private static long withZeroNanos(long millis) {
-        return millisToSeconds(millis) * 1000;
-    }
-
-    private static long millisToSeconds(long millis) {
-        return millis / 1000;
+    private static int getWindowIdx(long timestamp) {
+        return (int) (timestamp / 1000) % SECONDS_PER_MINUTE;
     }
 
     @SuppressWarnings("unchecked")
-    private void init() {
-        long now = currentSecondMillis();
+    public void clear() {
+        long now = currentMillis();
         for (int i = 0; i < SECONDS_PER_MINUTE; i++) {
             long timestamp = now - i * 1000;
-            int windowIdx = (int) (millisToSeconds(timestamp) % SECONDS_PER_MINUTE);
+            int windowIdx = getWindowIdx(timestamp);
             window[windowIdx].set(new TransactionSummary(timestamp, 0, 0, 0, 0, 0));
         }
     }
 
-    public void clear() {
-        init();
-    }
-
-    private void advanceWindow() {
-        long now = currentSecondMillis();
-        for (int i = 0; i < SECONDS_PER_MINUTE; i++) {
-            long timestamp = now - i * 1000;
-            doAddTransaction(new Transaction(timestamp, 0.0));
-        }
-    }
-
     public TransactionSummary getStatistics() {
-        advanceWindow();
-        TransactionSummary summary = new TransactionSummary(0, 0, 0, 0, 0, 0);
+        long now = currentMillis();
+        TransactionSummary total = new TransactionSummary(0, 0, 0, 0, 0, 0);
+
         for (AtomicReference reference : window) {
-            summary = addSummary(summary, (TransactionSummary) reference.get());
+            TransactionSummary summary = (TransactionSummary) reference.get();
+            if (summary != null && now - summary.getTimestamp() < SECONDS_PER_MINUTE * 1000) {
+                total = addSummary(total, summary);
+            }
         }
 
-        return summary;
+        return total;
     }
 
     private TransactionSummary addSummary(TransactionSummary transactionSummary1, TransactionSummary transactionSummary2) {
@@ -79,7 +66,9 @@ public class TransactionService {
             min = max;
         }
 
-        double sum = BigDecimal.valueOf(transactionSummary1.getSum()).add(BigDecimal.valueOf(transactionSummary2.getSum())).doubleValue();
+        double sum = BigDecimal.valueOf(transactionSummary1.getSum())
+                .add(BigDecimal.valueOf(transactionSummary2.getSum()))
+                .doubleValue();
         long count = transactionSummary1.getCount() + transactionSummary2.getCount();
 
         double avg = sum == 0 ? 0 : BigDecimal.valueOf(sum).divide(BigDecimal.valueOf(count), RoundingMode.HALF_EVEN).doubleValue();
@@ -87,18 +76,9 @@ public class TransactionService {
         return new TransactionSummary(0, max, min, avg, sum, count);
     }
 
-    public boolean addTransaction(Transaction transaction) {
-        if (withZeroNanos(transaction.getTimestamp()) > currentSecondMillis()) {
-            return false;
-        }
-
-        return doAddTransaction(transaction);
-    }
-
     @SuppressWarnings("unchecked")
-    private boolean doAddTransaction(Transaction transaction) {
-        long timestamp = withZeroNanos(transaction.getTimestamp());
-        int windowIdx = (int) (millisToSeconds(timestamp) % SECONDS_PER_MINUTE);
+    public boolean addTransaction(Transaction transaction) {
+        int windowIdx = getWindowIdx(transaction.getTimestamp());
         AtomicReference reference = window[windowIdx];
 
         while (true) {
@@ -116,16 +96,16 @@ public class TransactionService {
     }
 
     private TransactionSummary computeSummary(TransactionSummary prevTransactionSummary, Transaction transaction) {
-        if (prevTransactionSummary.getTimestamp() > transaction.getTimestamp()) {
+        long now = currentMillis();
+
+        if (transaction.getAmount() == 0 ||
+                transaction.getTimestamp() > now ||
+                now - transaction.getTimestamp() >= SECONDS_PER_MINUTE * 1000) {
             return prevTransactionSummary;
         }
 
-        if (prevTransactionSummary.getTimestamp() < withZeroNanos(transaction.getTimestamp())) {
-            prevTransactionSummary = new TransactionSummary(withZeroNanos(transaction.getTimestamp()), 0, 0, 0, 0, 0);
-        }
-
-        if (transaction.getAmount() == 0) {
-            return prevTransactionSummary;
+        if (prevTransactionSummary == null || now - prevTransactionSummary.getTimestamp() > SECONDS_PER_MINUTE * 1000) {
+            prevTransactionSummary = new TransactionSummary(transaction.getTimestamp(), 0, 0, 0, 0, 0);
         }
 
         double max = Math.max(prevTransactionSummary.getMax(), transaction.getAmount());
@@ -135,7 +115,9 @@ public class TransactionService {
             min = max;
         }
 
-        double sum = BigDecimal.valueOf(prevTransactionSummary.getSum()).add(BigDecimal.valueOf(transaction.getAmount())).doubleValue();
+        double sum = BigDecimal.valueOf(prevTransactionSummary.getSum())
+                .add(BigDecimal.valueOf(transaction.getAmount()))
+                .doubleValue();
         long count = prevTransactionSummary.getCount() + 1;
 
         return new TransactionSummary(prevTransactionSummary.getTimestamp(), max, min, 0, sum, count);

@@ -25,7 +25,6 @@ class TransactionServiceSpec extends Specification {
     @Autowired MockMvc mvc
 
     void setup() {
-        TimeMachine.setDate(LocalDateTime.now().withNano(0))
         service.clear()
     }
 
@@ -35,9 +34,10 @@ class TransactionServiceSpec extends Specification {
 
     void testRestController() {
         given: 'transactions with timestamp within last 15 seconds'
+            TimeMachine.setDate(LocalDateTime.now())
             def random = new Random()
             List<Transaction> transactions = (1..5).collect {
-                def timestamp = getTimestamp(-random.nextInt(60))
+                def timestamp = getTimestamp(-random.nextInt(59))
                 new Transaction(timestamp, it)
             }
 
@@ -55,7 +55,7 @@ class TransactionServiceSpec extends Specification {
             }
 
         when:
-            def noContentRequests = [1, -61].collect {
+            def noContentRequests = [1, -60].collect {
                 def body = asJsonString(new Transaction(getTimestamp(it), 100))
                 mvc.perform(post("/transactions")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -74,14 +74,15 @@ class TransactionServiceSpec extends Specification {
             statisticsRequest
                     .andExpect(status().isOk())
                     .andExpect(content().json(asJsonString(new TransactionSummary(0, 5, 1, 3, 15, 5))))
-
     }
 
     void testService() {
         given:
+            def now = LocalDateTime.now()
+            TimeMachine.setDate(now)
             def random = new Random()
             List<Transaction> transactions = (1..5).collect {
-                def timestamp = getTimestamp(-random.nextInt(15))
+                def timestamp = getTimestamp(-random.nextInt(59))
                 new Transaction(timestamp, it)
             }
 
@@ -91,7 +92,7 @@ class TransactionServiceSpec extends Specification {
             added.every()
 
         when:
-            def notAdded = [1, -61].collect {
+            def notAdded = [1, -60].collect {
                 service.addTransaction(new Transaction(getTimestamp(it), 100))
             }
         then:
@@ -105,13 +106,10 @@ class TransactionServiceSpec extends Specification {
             summary.min == 1
             summary.sum == 15
             summary.avg == 3
-    }
 
-    void testWindowAdvance() {
-        given:
-            service.addTransaction(new Transaction(getTimestamp(-60), 100))
         when:
-            TimeMachine.setDate(LocalDateTime.now().plusSeconds(1))
+            TimeMachine.setDate(now.plusSeconds(60))
+
         then:
             service.getStatistics().count == 0
     }
